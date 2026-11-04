@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Circuit Crafter: Space Station Power Relay</title>
+  <style>
+    :root {
+      --bg-dark: #0a0e17;
+      --panel-bg: rgba(16, 24, 39, 0.85);
+      --accent-cyan: #00f0ff;
+      --accent-green: #00ff66;
+      --accent-red: #ff3366;
+      --accent-amber: #ffb700;
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+      --border-color: #30363d;
+      --wire-off: #21262d;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(8px);
+      z-index: 10;
+    }
+
+    .title-area h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-area p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .btn {
+      background: #21262d;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: #30363d;
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-primary {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+    }
+
+    .btn-primary:hover {
+      background: rgba(0, 240, 255, 0.3);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    }
+
+    .main-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 16px;
+      padding: 16px 24px;
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 900px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .level-badge {
+      background: rgba(255, 183, 0, 0.2);
+      color: var(--accent-amber);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .mission-objective {
+      font-size: 0.95rem;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .telemetry-item {
+      background: #161b22;
+      border: 1px solid #30363d;
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .telemetry-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .telemetry-val {
+      font-size: 1.15rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--accent-cyan);
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: #161b22;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent-red);
+    }
+
+    .status-dot.active {
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .control-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+    }
+
+    .toggle-switch-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #161b22;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #30363d;
+      transition: .3s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--accent-green);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .canvas-container {
+      background: #0d1117;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #circuitCanvas {
+      width: 100%;
+      height: 100%;
+      flex: 1;
+      display: block;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #161b22;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .modal-header h2 {
+      font-size: 1.25rem;
+      color: var(--accent-cyan);
+    }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .info-group {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 12px 16px;
+    }
+
+    .info-group h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent-amber);
+      margin-bottom: 6px;
+    }
+
+    .info-group ul {
+      padding-left: 20px;
+    }
+
+    .success-banner {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(0, 255, 102, 0.9);
+      color: #000;
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 0 20px rgba(0,255,102,0.5);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .success-banner.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-area">
+      <h1>⚡ CIRCUIT CRAFTER</h1>
+      <p>Orbital Relay Power Calibration Sim</p>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-primary" id="aboutBtn">ℹ️ About the Course</button>
+      <button class="btn" id="nextLevelBtn" style="display:none;">Next Level ➔</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="sidebar">
+      <div class="card">
+        <div class="card-title">
+          <span>Mission Brief</span>
+          <span class="level-badge" id="levelBadge">Level 1/4</span>
+        </div>
+        <p class="mission-objective" id="missionText">Loading objective...</p>
+        
+        <div class="telemetry-grid">
+          <div class="telemetry-item">
+            <div class="telemetry-label">VOLTAGE (V)</div>
+            <div class="telemetry-val" id="voltageDisplay">12.0 V</div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label">CURRENT (I)</div>
+            <div class="telemetry-val" id="currentDisplay">0.00 A</div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label">EQ. RESISTANCE</div>
+            <div class="telemetry-val" id="resistanceDisplay">0.0 Ω</div>
+          </div>
+          <div class="telemetry-item">
+            <div class="telemetry-label">TARGET CURRENT</div>
+            <div class="telemetry-val" id="targetDisplay">2.00 A</div>
+          </div>
+        </div>
+
+        <div class="status-indicator">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusText">CIRCUIT OFFLINE</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Components Calibration</div>
+        <div class="controls-panel" id="controlsContainer">
+          <!-- Dynamically injected sliders & switches -->
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <div class="success-banner" id="successBanner">MISSION ACCOMPLISHED! POWER STABILIZED</div>
+      <canvas id="circuitCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- About The Course Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>About the Course</h2>
+        <button class="btn" id="closeModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-group">
+          <h3>STEM Topic</h3>
+          <p>Direct Current (DC) Electrical Circuits and Digital Logic Gate Architectures</p>
+        </div>
+
+        <div class="info-group">
+          <h3>Branch of STEM</h3>
+          <p>Engineering & Technology (Electrical Engineering / Computer Science)</p>
+        </div>
+
+        <div class="info-group">
+          <h3>Short Description of the Game</h3>
+          <p>Circuit Crafter is an interactive orbital engineering simulator. Players take the role of an avionics engineer tasked with restoring degraded power subsystems on an orbital research station. Players manipulate physical circuit parameters (series and parallel resistance) using Ohm's Law and configure digital logic gate switches (AND, OR, NOT) to balance current flow, avoid overload, and safely trigger critical relay switches.</p>
+        </div>
+
+        <div class="info-group">
+          <h3>Learning Objectives</h3>
+          <ul>
+            <li><strong>Objective 1:</strong> Apply Ohm's Law ($I = V / R$) to calculate and balance target electric currents across series ($R_{eq} = R_1 + R_2$) and parallel ($1/R_{eq} = 1/R_1 + 1/R_2$) resistive networks.</li>
+            <li><strong>Objective 2:</strong> Analyze and synthesize Boolean logic operations (AND, OR, NOT) to create truth-table configurations that successfully trigger protective hardware relays.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Audio Synthesizer (Zero External Dependencies)
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+      }
+      playClick() {
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.04);
+      }
+      playSuccess() {
+        this.init();
+        const now = this.ctx.currentTime;
+        const freqs = [440, 554.37, 659.25, 880];
+        freqs.forEach((f, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = f;
+          gain.gain.setValueAtTime(0, now + i * 0.08);
+          gain.gain.linearRampToValueAtTime(0.2, now + i * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.35);
+        });
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    // Mission Levels Definition
+    const LEVELS = [
+      {
+        id: 1,
+        title: "Level 1: Series Calibration",
+        voltage: 12,
+        targetCurrent: 2.0,
+        tolerance: 0.05,
+        type: "series",
+        missionText: "Calibrate series resistors R1 and R2 so that total circuit current reaches exactly 2.00 A to power the life support scrubber (I = V / R_total).",
+        controls: [
+          { id: "r1", label: "Resistor R1 (Ω)", type: "range", min: 1, max: 10, step: 0.5, value: 5 },
+          { id: "r2", label: "Resistor R2 (Ω)", type: "range", min: 1, max: 10, step: 0.5, value: 5 }
+        ]
+      },
+      {
+        id: 2,
+        title: "Level 2: Parallel Shunt Line",
+        voltage: 24,
+        targetCurrent: 6.0,
+        tolerance: 0.08,
+        type: "parallel",
+        missionText: "Configure dual parallel branches RA and RB to achieve a combined current of 6.00 A for ion thruster pre-heating (1/R_eq = 1/RA + 1/RB).",
+        controls: [
+          { id: "ra", label: "Branch RA (Ω)", type: "range", min: 4, max: 20, step: 1, value: 12 },
+          { id: "rb", label: "Branch RB (Ω)", type: "range", min: 4, max: 20, step: 1, value: 12 }
+        ]
+      },
+      {
+        id: 3,
+        title: "Level 3: Digital Relay Interlock",
+        voltage: 5,
+        targetCurrent: 1.0,
+        tolerance: 0.01,
+        type: "logic",
+        missionText: "Emergency blast door logic: Output must be HIGH (1). The gate network is: OUT = (SW_A AND SW_B) OR (NOT SW_C). Align the switches correctly.",
+        controls: [
+          { id: "sw_a", label: "Switch A (Aux Auxiliaries)", type: "switch", value: false },
+          { id: "sw_b", label: "Switch B (Main Turbine)", type: "switch", value: false },
+          { id: "sw_c", label: "Switch C (Manual Lockout)", type: "switch", value: true }
+        ]
+      },
+      {
+        id: 4,
+        title: "Level 4: Hybrid Cyber-Physical Grid",
+        voltage: 48,
+        targetCurrent: 4.0,
+        tolerance: 0.08,
+        type: "hybrid",
+        missionText: "Final station stabilization: Enable the master interlock (SW1 AND SW2) AND trim potentiometer R_trim to deliver 4.00 A across the primary reactor core.",
+        controls: [
+          { id: "sw1", label: "Safety Key 1", type: "switch", value: true },
+          { id: "sw2", label: "Safety Key 2", type: "switch", value: false },
+          { id: "r_trim", label: "Trim Potentiometer (Ω)", type: "range", min: 4, max: 24, step: 1, value: 18 }
+        ]
+      }
+    ];
+
+    let currentLevelIndex = 0;
+    let levelState = {};
+    let isCompleted = false;
+    let electronOffset = 0;
+
+    // DOM References
+    const canvas = document.getElementById("circuitCanvas");
+    const ctx = canvas.getContext("2d");
+    const levelBadge = document.getElementById("levelBadge");
+    const missionText = document.getElementById("missionText");
+    const voltageDisplay = document.getElementById("voltageDisplay");
+    const currentDisplay = document.getElementById("currentDisplay");
+    const resistanceDisplay = document.getElementById("resistanceDisplay");
+    const targetDisplay = document.getElementById("targetDisplay");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const controlsContainer = document.getElementById("controlsContainer");
+    const nextLevelBtn = document.getElementById("nextLevelBtn");
+    const successBanner = document.getElementById("successBanner");
+    const modalOverlay = document.getElementById("modalOverlay");
+    const aboutBtn = document.getElementById("aboutBtn");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+
+    // Modal Control
+    aboutBtn.addEventListener("click", () => modalOverlay.classList.add("open"));
+    closeModalBtn.addEventListener("click", () => modalOverlay.classList.remove("open"));
+    modalOverlay.addEventListener("click", (e) => {
+      if (e.target === modalOverlay) modalOverlay.classList.remove("open");
+    });
+
+    // Canvas Auto Resize
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+    }
+    window.addEventListener("resize", resizeCanvas);
+
+    // Initialize Level
+    function loadLevel(idx) {
+      currentLevelIndex = idx;
+      isCompleted = false;
+      const lvl = LEVELS[idx];
+
+      levelBadge.textContent = `Level ${lvl.id}/4`;
+      missionText.textContent = lvl.missionText;
+      voltageDisplay.textContent = `${lvl.voltage.toFixed(1)} V`;
+      targetDisplay.textContent = `${lvl.targetCurrent.toFixed(2)} A`;
+      nextLevelBtn.style.display = "none";
+      successBanner.classList.remove("show");
+
+      // Setup initial control states
+      levelState = {};
+      controlsContainer.innerHTML = "";
+
+      lvl.controls.forEach(ctrl => {
+        levelState[ctrl.id] = ctrl.value;
+
+        if (ctrl.type === "range") {
+          const div = document.createElement("div");
+          div.className = "control-row";
+          div.innerHTML = `
+            <div class="control-header">
+              <span>${ctrl.label}</span>
+              <strong id="val_${ctrl.id}">${ctrl.value} Ω</strong>
+            </div>
+            <input type="range" min="${ctrl.min}" max="${ctrl.max}" step="${ctrl.step}" value="${ctrl.value}" id="input_${ctrl.id}">
+          `;
+          controlsContainer.appendChild(div);
+          
+          const input = div.querySelector("input");
+          input.addEventListener("input", (e) => {
+            sound.playClick();
+            levelState[ctrl.id] = parseFloat(e.target.value);
+            document.getElementById(`val_${ctrl.id}`).textContent = `${levelState[ctrl.id]} Ω`;
+            updateSimulation();
+          });
+        } else if (ctrl.type === "switch") {
+          const div = document.createElement("div");
+          div.className = "toggle-switch-container";
+          div.innerHTML = `
+            <span>${ctrl.label}</span>
+            <label class="switch">
+              <input type="checkbox" id="input_${ctrl.id}" ${ctrl.value ? "checked" : ""}>
+              <span class="slider"></span>
+            </label>
+          `;
+          controlsContainer.appendChild(div);
+
+          const input = div.querySelector("input");
+          input.addEventListener("change", (e) => {
+            sound.playClick();
+            levelState[ctrl.id] = e.target.checked;
+            updateSimulation();
+          });
+        }
+      });
+
+      updateSimulation();
+    }
+
+    // Circuit Math & Evaluation
+    function updateSimulation() {
+      const lvl = LEVELS[currentLevelIndex];
+      let current = 0;
+      let req = 0;
+      let powerGood = false;
+
+      if (lvl.type === "series") {
+        req = levelState.r1 + levelState.r2;
+        current = lvl.voltage / req;
+        resistanceDisplay.textContent = `${req.toFixed(1)} Ω`;
+        powerGood = Math.abs(current - lvl.targetCurrent) <= lvl.tolerance;
+      } else if (lvl.type === "parallel") {
+        req = 1 / ((1 / levelState.ra) + (1 / levelState.rb));
+        current = lvl.voltage / req;
+        resistanceDisplay.textContent = `${req.toFixed(2)} Ω`;
+        powerGood = Math.abs(current - lvl.targetCurrent) <= lvl.tolerance;
+      } else if (lvl.type === "logic") {
+        const out = (levelState.sw_a && levelState.sw_b) || (!levelState.sw_c);
+        resistanceDisplay.textContent = out ? "CLOSED (0 Ω)" : "OPEN (∞ Ω)";
+        current = out ? lvl.targetCurrent : 0;
+        powerGood = out;
+      } else if (lvl.type === "hybrid") {
+        const logicEnabled = levelState.sw1 && levelState.sw2;
+        if (logicEnabled) {
+          req = levelState.r_trim;
+          current = lvl.voltage / req;
+          resistanceDisplay.textContent = `${req.toFixed(1)} Ω`;
+          powerGood = Math.abs(current - lvl.targetCurrent) <= lvl.tolerance;
+        } else {
+          req = Infinity;
+          current = 0;
+          resistanceDisplay.textContent = "OPEN (∞ Ω)";
+          powerGood = false;
+        }
+      }
+
+      currentDisplay.textContent = `${current.toFixed(2)} A`;
+
+      if (powerGood) {
+        statusDot.className = "status-dot active";
+        statusText.textContent = "STABLE - NOMINAL FLOW";
+        if (!isCompleted) {
+          isCompleted = true;
+          sound.playSuccess();
+          successBanner.classList.add("show");
+          if (currentLevelIndex < LEVELS.length - 1) {
+            nextLevelBtn.style.display = "flex";
+          }
+        }
+      } else {
+        statusDot.className = "status-dot";
+        statusText.textContent = current > lvl.targetCurrent ? "OVERLOAD DETECTED" : "UNDERPOWERED / OFF";
+        if (isCompleted) {
+          isCompleted = false;
+          successBanner.classList.remove("show");
+        }
+      }
+    }
+
+    nextLevelBtn.addEventListener("click", () => {
+      if (currentLevelIndex < LEVELS.length - 1) {
+        loadLevel(currentLevelIndex + 1);
+      }
+    });
+
+    // Graphic Circuit Renderer
+    function drawCircuit() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const w = canvas.width;
+      const h = canvas.height;
+      const lvl = LEVELS[currentLevelIndex];
+
+      // Subtle background grid
+      ctx.strokeStyle = "#161b22";
+      ctx.lineWidth = 1;
+      const gridSize = 30;
+      for (let x = 0; x < w; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      const activeColor = isCompleted ? "#00ff66" : "#00f0ff";
+      const wireColor = (parseFloat(currentDisplay.textContent) > 0) ? activeColor : "#21262d";
+
+      // Bounding Box Layout
+      const padX = 80;
+      const padY = 70;
+      const left = padX;
+      const right = w - padX;
+      const top = padY;
+      const bottom = h - padY;
+      const midY = (top + bottom) / 2;
+      const midX = (left + right) / 2;
+
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = wireColor;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      // Draw Main Circuit Loop
+      ctx.beginPath();
+      ctx.moveTo(left, midY - 30);
+      ctx.lineTo(left, top);
+      ctx.lineTo(right, top);
+      ctx.lineTo(right, bottom);
+      ctx.lineTo(left, bottom);
+      ctx.lineTo(left, midY + 30);
+      ctx.stroke();
+
+      // DC Voltage Source Symbol (Left Side)
+      ctx.strokeStyle = "#fff";
+      ctx.beginPath();
+      ctx.moveTo(left - 24, midY - 15); ctx.lineTo(left + 24, midY - 15);
+      ctx.moveTo(left - 12, midY + 15); ctx.lineTo(left + 12, midY + 15);
+      ctx.stroke();
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "12px monospace";
+      ctx.textAlign = "right";
+      ctx.fillText(`${lvl.voltage}V [DC]`, left - 32, midY + 4);
+
+      // Level-Specific Component Visuals
+      if (lvl.type === "series") {
+        drawResistor(midX - 100, top, `R1: ${levelState.r1}Ω`);
+        drawResistor(midX + 100, top, `R2: ${levelState.r2}Ω`);
+      } else if (lvl.type === "parallel") {
+        const branchTop = top + 40;
+        const branchBot = top + 130;
+
+        ctx.strokeStyle = wireColor;
+        ctx.beginPath();
+        ctx.moveTo(left + 80, top);
+        ctx.lineTo(left + 80, branchBot);
+        ctx.lineTo(right - 80, branchBot);
+        ctx.lineTo(right - 80, top);
+        ctx.stroke();
+
+        drawResistor(midX, top, `RA: ${levelState.ra}Ω`);
+        drawResistor(midX, branchBot, `RB: ${levelState.rb}Ω`);
+      } else if (lvl.type === "logic") {
+        drawSwitch(midX - 120, top, levelState.sw_a, "SW A");
+        drawSwitch(midX, top, levelState.sw_b, "SW B");
+        drawSwitch(midX, bottom, levelState.sw_c, "SW C (Lock)");
+
+        ctx.fillStyle = activeColor;
+        ctx.textAlign = "center";
+        ctx.fillText("[LOGIC BLOCK: (A & B) | (!C)]", midX, midY);
+      } else if (lvl.type === "hybrid") {
+        drawSwitch(midX - 120, top, levelState.sw1, "KEY 1");
+        drawSwitch(midX - 40, top, levelState.sw2, "KEY 2");
+        drawResistor(midX + 90, top, `R_trim: ${levelState.r_trim}Ω`);
+      }
+
+      // Load Unit / Reactor Core (Right side)
+      ctx.fillStyle = isCompleted ? "rgba(0,255,102,0.2)" : "rgba(255,51,102,0.1)";
+      ctx.strokeStyle = isCompleted ? "#00ff66" : "#ff3366";
+      ctx.lineWidth = 2;
+      ctx.fillRect(right - 25, midY - 25, 50, 50);
+      ctx.strokeRect(right - 25, midY - 25, 50, 50);
+
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.font = "11px sans-serif";
+      ctx.fillText(isCompleted ? "ONLINE" : "STANDBY", right, midY + 4);
+
+      // Electron Flow Animation
+      const currentVal = parseFloat(currentDisplay.textContent);
+      if (currentVal > 0) {
+        electronOffset += currentVal * 1.5;
+        if (electronOffset > 30) electronOffset = 0;
+
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowColor = activeColor;
+        ctx.shadowBlur = 8;
+
+        const pathPoints = [
+          { x: left, y: top },
+          { x: right, y: top },
+          { x: right, y: bottom },
+          { x: left, y: bottom }
+        ];
+
+        for (let i = 0; i < 4; i++) {
+          const p1 = pathPoints[i];
+          const p2 = pathPoints[(i + 1) % 4];
+          const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+          const steps = Math.floor(dist / 32);
+
+          for (let s = 0; s < steps; s++) {
+            const progress = ((s * 32 + electronOffset) % dist) / dist;
+            const ex = p1.x + (p2.x - p1.x) * progress;
+            const ey = p1.y + (p2.y - p1.y) * progress;
+            ctx.beginPath();
+            ctx.arc(ex, ey, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.shadowBlur = 0; // reset blur
+      }
+
+      requestAnimationFrame(drawCircuit);
+    }
+
+    function drawResistor(x, y, label) {
+      ctx.fillStyle = "#161b22";
+      ctx.strokeStyle = "#ffb700";
+      ctx.lineWidth = 2;
+      ctx.fillRect(x - 28, y - 12, 56, 24);
+      ctx.strokeRect(x - 28, y - 12, 56, 24);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "11px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(label, x, y - 18);
+    }
+
+    function drawSwitch(x, y, closed, label) {
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(x - 16, y, 4, 0, Math.PI * 2);
+      ctx.arc(x + 16, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = closed ? "#00ff66" : "#ff3366";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x - 16, y);
+      if (closed) {
+        ctx.lineTo(x + 16, y);
+      } else {
+        ctx.lineTo(x + 12, y - 16);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = "#8b949e";
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(label, x, y + 20);
+    }
+
+    // App Boot
+    window.onload = () => {
+      resizeCanvas();
+      loadLevel(0);
+      drawCircuit();
+    };
+  </script>
+</body>
+</html>
